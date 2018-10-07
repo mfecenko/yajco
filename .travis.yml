@@ -1,15 +1,17 @@
 language: java
 env:
-  - TEST_DIR=yajco-example-deskNielsen
-  - TEST_DIR=yajco-example-extMathExpressions
-  - TEST_DIR=yajco-example-imperativeLang
-  - TEST_DIR=yajco-example-json
-  - TEST_DIR=yajco-example-mathExpressions
-  - TEST_DIR=yajco-example-robotKarel
-  - TEST_DIR=yajco-example-simpleRobot
-  - TEST_DIR=yajco-example-stateMachine
+  - EXAMPLE_TEST_DIR=yajco-example-deskNielsen
+  - EXAMPLE_TEST_DIR=yajco-example-extMathExpressions
+  - EXAMPLE_TEST_DIR=yajco-example-imperativeLang
+  - EXAMPLE_TEST_DIR=yajco-example-json
+  - EXAMPLE_TEST_DIR=yajco-example-mathExpressions
+  - EXAMPLE_TEST_DIR=yajco-example-robotKarel
+  - EXAMPLE_TEST_DIR=yajco-example-simpleRobot
+  - EXAMPLE_TEST_DIR=yajco-example-stateMachine
 script:
+  - mvn compile
+  - mvn clean
   - git clone https://github.com/kpi-tuke/yajco-examples && cd yajco-examples
-  - cd $TEST_DIR && mvn verify -Dyajco.version="0.5.9" && mvn clean
+  - cd $EXAMPLE_TEST_DIR && mvn verify -Dyajco.version="0.5.9" && mvn clean
   - cd ..
   - rm -rf yajco-examples
