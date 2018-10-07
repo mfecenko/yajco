@@ -13,5 +13,6 @@ script:
   - mvn compile
   - mvn clean
   - git clone https://github.com/kpi-tuke/yajco-examples
+  # for specifying YAJCo version change value of yajco.version property
   - cd $EXAMPLE_TEST_DIR && mvn verify -Dyajco.version="0.5.9" && mvn clean
   - rm -rf yajco-examples
