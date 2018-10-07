@@ -12,4 +12,4 @@ script:
   - git clone https://github.com/kpi-tuke/yajco-examples && cd yajco-examples
   - cd $TEST_DIR && mvn verify -Dyajco.version="0.5.9" && mvn clean
   - cd ..
-  - cd rm -rf yajco-examples
+  - rm -rf yajco-examples
