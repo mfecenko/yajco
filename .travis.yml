@@ -9,12 +9,10 @@ env:
   - EXAMPLE_TEST_DIR=yajco-examples/yajco-example-robotKarel
   - EXAMPLE_TEST_DIR=yajco-examples/yajco-example-simpleRobot
   - EXAMPLE_TEST_DIR=yajco-examples/yajco-example-stateMachine
-  - YAJCO_VERSION
 script:
   - mvn install
   - mvn compile
   - mvn clean
-  - $YAJCO_VERSION=mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version
   - git clone https://github.com/kpi-tuke/yajco-examples
-  - cd $EXAMPLE_TEST_DIR && mvn verify -Dyajco.version=$YAJCO_VERSION && mvn clean
+  - cd $EXAMPLE_TEST_DIR && mvn verify -Dyajco.version=mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version && mvn clean
   - rm -rf yajco-examples
