@@ -1,17 +1,3 @@
 language: java
-env:
-  - EXAMPLE_TEST_DIR=yajco-examples/yajco-example-deskNielsen
-  - EXAMPLE_TEST_DIR=yajco-examples/yajco-example-extMathExpressions
-  - EXAMPLE_TEST_DIR=yajco-examples/yajco-example-gettingStarted
-  - EXAMPLE_TEST_DIR=yajco-examples/yajco-example-imperativeLang
-  - EXAMPLE_TEST_DIR=yajco-examples/yajco-example-json
-  - EXAMPLE_TEST_DIR=yajco-examples/yajco-example-mathExpressions
-  - EXAMPLE_TEST_DIR=yajco-examples/yajco-example-robotKarel
-  - EXAMPLE_TEST_DIR=yajco-examples/yajco-example-simpleRobot
-  - EXAMPLE_TEST_DIR=yajco-examples/yajco-example-stateMachine
 script:
-  - mvn install package
-  - git clone https://github.com/mfecenko/yajco-examples
-  - mvn org.apache.maven.plugins:maven-help-plugin:3.1.0:evaluate -Dexpression=project.version | grep -v '\['
-  - cd $EXAMPLE_TEST_DIR && mvn verify -Dyajco.version=$(cd .. && cd .. && mvn org.apache.maven.plugins:maven-help-plugin:3.1.0:evaluate -Dexpression=project.version | grep -v '\[') && mvn clean
-  - rm -rf yajco-examples
+  - bash test_examples.sh
