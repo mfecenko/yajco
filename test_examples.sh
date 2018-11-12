@@ -7,4 +7,5 @@ yajco_version=$(mvn org.apache.maven.plugins:maven-help-plugin:3.1.0:evaluate \
 #clone yajco-examples and execute tests
 git clone --depth=1 https://github.com/kpi-tuke/yajco-examples
 cd yajco-examples
+echo "Use YAJCo version $yajco_version to run tests in yajco-examples"
 mvn verify -Dyajco.version=$yajco_version
