@@ -74,6 +74,10 @@ public class Alternative extends PatternSupport {
 		return actions;
 	}
 
+	public void setActions(List<Action> actions) {
+		this.actions = actions;
+	}
+
 	public int getPriority() {
 		Operator opPattern = (Operator) getPattern(Operator.class);
 		return opPattern != null ? opPattern.getPriority() : -1;

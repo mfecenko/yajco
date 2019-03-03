@@ -426,7 +426,7 @@ public class AnnotationProcessor extends AbstractProcessor {
             }
 
             Token tokenAnnotation = element.getAnnotation(Token.class);
-            Notation notation = new Notation(typeElement);
+            Notation notation = new Notation(typeElement, false);
             TokenPart tokenPart;
             if (tokenAnnotation != null) {
                 tokenPart = new TokenPart(tokenAnnotation.value(), tokenAnnotation);
@@ -458,31 +458,77 @@ public class AnnotationProcessor extends AbstractProcessor {
     private void defineConcreteSyntax(Concept concept, TypeElement classElement) {
         Set<ExecutableElement> constructors = getConstructorsAndFactoryMethods(classElement);
         for (ExecutableElement constructor : constructors) {
-            Notation notation = new Notation(constructor);
+            Notation notation = new Notation(constructor, false);
 
-            // @Before annotation.
-            if (constructor.getAnnotation(Before.class) != null) {
-                addTokenParts(notation, constructor.getAnnotation(Before.class).value());
+            if (constructor.getAnnotation(UnorderedParameters.class) != null) {
+                List<? extends VariableElement> parameters = new ArrayList<>(constructor.getParameters());
+
+                for (List<? extends VariableElement> paramElements : this.generateAlternatives(parameters)) {
+                    processConstructor(concept, constructor, notation, paramElements);
+                    notation = new Notation(constructor, true);
+                }
+            } else {
+                processConstructor(concept, constructor, notation, constructor.getParameters());
             }
-
-            for (VariableElement paramElement : constructor.getParameters()) {
-                processParameter(concept, notation, paramElement);
-            }
-
-            // @After annotation.
-            if (constructor.getAnnotation(After.class) != null) {
-                addTokenParts(notation, constructor.getAnnotation(After.class).value());
-            }
-
-            concept.addNotation(notation);
-            if (constructor.getKind() == ElementKind.METHOD) {
-                notation.addPattern(new Factory(constructor.getSimpleName().toString()));
-            }
-
-            //TODO: odstranit pri prenesesni @Operator na triedu
-            // Add concept pattern from annotations (Type).
-            addPatternsFromAnnotations(constructor, concept);
         }
+    }
+
+    /**
+     * Processes constructor or factory method of language model element.
+     *
+     * @param concept Language concept.
+     * @param constructor Elements constroctor or factory method.
+     * @param notation Notation of language concept.
+     * @param paramElements List of parameters of constructor or factory method.
+     */
+    private void processConstructor(Concept concept, ExecutableElement constructor, Notation notation, List<? extends VariableElement> paramElements) {
+        // @Before annotation.
+        if (constructor.getAnnotation(Before.class) != null) {
+            addTokenParts(notation, constructor.getAnnotation(Before.class).value());
+        }
+
+        for (VariableElement paramElement : paramElements) {
+            processParameter(concept, notation, paramElement);
+        }
+
+        // @After annotation.
+        if (constructor.getAnnotation(After.class) != null) {
+            addTokenParts(notation, constructor.getAnnotation(After.class).value());
+        }
+
+        concept.addNotation(notation);
+        if (constructor.getKind() == ElementKind.METHOD) {
+            notation.addPattern(new Factory(constructor.getSimpleName().toString()));
+        }
+
+        //TODO: odstranit pri prenesesni @Operator na triedu
+        // Add concept pattern from annotations (Type).
+        addPatternsFromAnnotations(constructor, concept);
+    }
+
+    /**
+     * Generates all combinations of list elements with no repetitions.
+     *
+     * @param originalList List of elements.
+     * @return List of combinations with no repetitions.
+     */
+    private <E> List<List<E>> generateAlternatives(List<E> originalList) {
+        if (originalList.size() == 0) {
+            List<List<E>> result = new ArrayList<List<E>>();
+            result.add(new ArrayList<E>());
+            return result;
+        }
+        E firstElement = originalList.remove(0);
+        List<List<E>> returnValue = new ArrayList<List<E>>();
+        List<List<E>> alternatives = generateAlternatives(originalList);
+        for (List<E> alternative : alternatives) {
+            for (int index=0; index <= alternative.size(); index++) {
+                List<E> temp = new ArrayList<E>(alternative);
+                temp.add(index, firstElement);
+                returnValue.add(temp);
+            }
+        }
+        return returnValue;
     }
 
     /**

@@ -19,6 +19,7 @@ import yajco.model.pattern.PatternSupport;
 public class Notation extends PatternSupport<NotationPattern> {
 
     private List<NotationPart> parts;
+    private boolean unordered;
 
     public Notation(
             @Range(minOccurs = 1) NotationPart[] parts,
@@ -34,9 +35,10 @@ public class Notation extends PatternSupport<NotationPattern> {
     }
 
     @Exclude
-    public Notation(Object sourceElement) {
+    public Notation(Object sourceElement, boolean unordered) {
         super(sourceElement);
         parts = new ArrayList<NotationPart>();
+        this.unordered = unordered;
     }
     
     //needed for XML binding
@@ -51,6 +53,10 @@ public class Notation extends PatternSupport<NotationPattern> {
 
     public void addPart(NotationPart part) {
         parts.add(part);
+    }
+
+    public boolean isUnordered() {
+        return unordered;
     }
 
     @Override
