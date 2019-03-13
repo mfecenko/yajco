@@ -409,6 +409,7 @@ public class YajcoModelToBNFGrammarTranslator {
         Symbol symbol;
         String separator;
         int min, max;
+        boolean unique;
 
         if (innerType instanceof ReferenceType) {
             ReferenceType refType = (ReferenceType) innerType;
@@ -426,6 +427,9 @@ public class YajcoModelToBNFGrammarTranslator {
 
         Separator sepPattern = (Separator) part.getPattern(Separator.class);
         Range rangePattern = (Range) part.getPattern(Range.class);
+        UniqueValues uniqueValuesPattern = (UniqueValues) part.getPattern(UniqueValues.class);
+        unique = uniqueValuesPattern != null;
+
         separator = sepPattern != null ? sepPattern.getValue() : "";
         min = rangePattern != null ? rangePattern.getMinOccurs() : 0;
         max = rangePattern != null ? rangePattern.getMaxOccurs() : Range.INFINITY;
@@ -437,7 +441,7 @@ public class YajcoModelToBNFGrammarTranslator {
             if (cmpType instanceof OptionalType) {
                 return symbol;
             } else {
-                return createSequenceProductionFor(symbol, min, max, separator, cmpType);
+                return createSequenceProductionFor(symbol, min, max, separator, cmpType, unique);
             }
         }
     }
@@ -447,6 +451,7 @@ public class YajcoModelToBNFGrammarTranslator {
         Symbol symbol;
         String separator;
         int min, max;
+        boolean unique;
 
         if (innerType instanceof ReferenceType) {
             ReferenceType refType = (ReferenceType) innerType;
@@ -461,6 +466,9 @@ public class YajcoModelToBNFGrammarTranslator {
 
         Separator sepPattern = (Separator) part.getPattern(Separator.class);
         Range rangePattern = (Range) part.getPattern(Range.class);
+        UniqueValues uniqueValuesPattern = (UniqueValues) part.getPattern(UniqueValues.class);
+        unique = uniqueValuesPattern != null;
+
         separator = sepPattern != null ? sepPattern.getValue() : "";
         min = rangePattern != null ? rangePattern.getMinOccurs() : 1;
         max = rangePattern != null ? rangePattern.getMaxOccurs() : Range.INFINITY;
@@ -469,13 +477,17 @@ public class YajcoModelToBNFGrammarTranslator {
         if (nonterminal != null) {
             return new NonterminalSymbol(nonterminal.getName(), cmpType, nonterminal.getVarName());
         } else {
-            return createSequenceProductionFor(symbol, min, max, separator, cmpType);
-
+            return createSequenceProductionFor(symbol, min, max, separator, cmpType, unique);
         }
     }
 
-    private NonterminalSymbol createSequenceProductionFor(Symbol symbol, int minOccurs, int maxOccurs, String separator, ComponentType cmpType) {
-        NonterminalSymbol lhs = new NonterminalSymbol(symbol.getName() + "Array" + arrayID++, new ListType(cmpType.getComponentType()));
+    private NonterminalSymbol createSequenceProductionFor(Symbol symbol, int minOccurs, int maxOccurs, String separator, ComponentType cmpType, boolean unique) {
+        NonterminalSymbol lhs;
+        if (unique) {
+            lhs = new NonterminalSymbol(symbol.getName() + "Array" + arrayID++, new SetType(cmpType.getComponentType()));
+        } else {
+            lhs = new NonterminalSymbol(symbol.getName() + "Array" + arrayID++, new ListType(cmpType.getComponentType()));
+        }
         grammar.addNonterminal(lhs);
 
         TerminalSymbol sepTerminal = getTerminalFor(separator);
@@ -497,12 +509,24 @@ public class YajcoModelToBNFGrammarTranslator {
 
             if (minOccurs == 1) {
                 alternative2.addSymbol(symbol);
-                alternative2.addActions(SemLangFactory.createListAndAddElementAndReturnActions(cmpType.getComponentType(), DEFAULT_LIST_NAME, symbol));
+                if (unique) {
+                    alternative2.addActions(SemLangFactory.createSetAndAddElementAndReturnActions(cmpType.getComponentType(), DEFAULT_LIST_NAME, symbol));
+                } else {
+                    alternative2.addActions(SemLangFactory.createListAndAddElementAndReturnActions(cmpType.getComponentType(), DEFAULT_LIST_NAME, symbol));
+                }
             } else {
-                alternative2.addActions(SemLangFactory.createListAndReturnActions(cmpType.getComponentType()));
+                if (unique) {
+                    alternative2.addActions(SemLangFactory.createSetAndReturnActions(cmpType.getComponentType()));
+                } else {
+                    alternative2.addActions(SemLangFactory.createListAndReturnActions(cmpType.getComponentType()));
+                }
                 if (sepTerminal != null) {
                     alternative3.addSymbol(symbol);
-                    alternative3.addActions(SemLangFactory.createListAndAddElementAndReturnActions(cmpType.getComponentType(), DEFAULT_LIST_NAME, symbol));
+                    if (unique) {
+                        alternative3.addActions(SemLangFactory.createSetAndAddElementAndReturnActions(cmpType.getComponentType(), DEFAULT_LIST_NAME, symbol));
+                    } else {
+                        alternative3.addActions(SemLangFactory.createListAndAddElementAndReturnActions(cmpType.getComponentType(), DEFAULT_LIST_NAME, symbol));
+                    }
                 }
             }
 
@@ -521,7 +545,11 @@ public class YajcoModelToBNFGrammarTranslator {
             for (int i = minOccurs; i <= maxOccurs; i++) {
                 Alternative alternative = new Alternative();
                 alternative.addSymbols(symbols);
-                alternative.addActions(SemLangFactory.createListAndAddElementsAndReturnActions(cmpType.getComponentType(), DEFAULT_LIST_NAME, symbols));
+                if (unique) {
+                    alternative.addActions(SemLangFactory.createSetAndAddElementsAndReturnActions(cmpType.getComponentType(), DEFAULT_LIST_NAME, symbols));
+                } else {
+                    alternative.addActions(SemLangFactory.createListAndAddElementsAndReturnActions(cmpType.getComponentType(), DEFAULT_LIST_NAME, symbols));
+                }
                 production.addAlternative(alternative);
 
                 symbols.add(symbol instanceof NonterminalSymbol ? new NonterminalSymbol(symbol.getName(), symbol.getReturnType(), DEFAULT_VAR_NAME + symID++) : new TerminalSymbol(symbol.getName(), symbol.getReturnType(), DEFAULT_VAR_NAME + symID++));
