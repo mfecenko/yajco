@@ -76,6 +76,7 @@ public class BeaverParserGenerator {
 //			writer.println("%import \"" + Utilities.getFullConceptClassName(language, concept) + "\";");
 //		}
         writer.println("%import \"" + parserPackageName + ".SymbolListImpl\";");
+        writer.println("%import \"" + parserPackageName + ".SymbolLinkedHashSetImpl\";");
         //DOMINIK TEST
         writer.println("%import \"" + parserPackageName + ".SymbolWrapper\";");
         // END

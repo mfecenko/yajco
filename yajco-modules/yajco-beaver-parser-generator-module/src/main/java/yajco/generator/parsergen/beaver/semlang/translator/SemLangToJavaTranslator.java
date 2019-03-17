@@ -142,7 +142,7 @@ public class SemLangToJavaTranslator {
 			translateRValue(action.getRValue(), writer);
 			writer.print(")");
 		} else if (action.getResultCollectionType() instanceof SetType) {
-			writer.print("new java.util.HashSet<");
+			writer.print("new java.util.LinkedHashSet<");
 			writer.print(typeToString(action.getResultCollectionInnerType()));
 			writer.print(">(");
 			translateRValue(action.getRValue(), writer);
@@ -165,7 +165,7 @@ public class SemLangToJavaTranslator {
 			writer.print(typeToString(action.getInnerType()));
 			writer.print(">()");
 		} else if (action.getComponentType() instanceof SetType) {
-			writer.print("new java.util.HashSet<");
+			writer.print("new SymbolLinkedHashSetImpl<");
 			writer.print(typeToString(action.getInnerType()));
 			writer.print(">()");
 		} else if (action.getComponentType() instanceof OptionalType) {
