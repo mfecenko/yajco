@@ -607,7 +607,7 @@ public class YajcoModelToBNFGrammarTranslator {
         return newList;
     }
 
-    //	private List<Symbol> toSymbolList(Symbol symbol) {
+//	private List<Symbol> toSymbolList(Symbol symbol) {
 //		List<Symbol> list = new ArrayList<Symbol>(1);
 //		list.add(symbol);
 //
