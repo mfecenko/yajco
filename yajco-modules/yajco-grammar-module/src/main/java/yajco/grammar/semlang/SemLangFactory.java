@@ -27,6 +27,10 @@ public final class SemLangFactory {
 		return createOptionalClassInstanceAndReturnActions(symbolsToRValues(symbols));
 	}
 
+	public static List<Action> createNewUnorderedParamClassInstanceAndReturnActions(String classType, Type type, List<Symbol> symbols) {
+		return createUnorderedParamClassInstanceAndReturnActions(classType, type, symbolsToRValues(symbols));
+	}
+
 	public static List<Action> createFactoryClassInstanceActions(String classType, String factoryMethodName, List<Symbol> symbols) {
 		return createClassInstanceActions(classType, factoryMethodName, symbolsToRValues(symbols));
 	}
@@ -124,6 +128,12 @@ public final class SemLangFactory {
 		return actions;
 	}
 
+	private static List<Action> createUnorderedParamClassInstanceActions(String classType, Type type, List<RValue> parameters) {
+		List<Action> actions = new ArrayList<Action>(1);
+		actions.add(new CreateUnorderedParamClassInstanceAction(parameters));
+		return actions;
+	}
+
 	private static List<Action> createClassInstanceAndReturnActions(String classType, String factoryMethodName, List<RValue> parameters) {
 		List<Action> actions = new ArrayList<Action>(1);
 		actions.add(new ReturnAction(new RValue(createClassInstanceActions(classType, factoryMethodName, parameters).get(0))));
@@ -137,6 +147,12 @@ public final class SemLangFactory {
 		} else {
 			actions.add(new ReturnAction(new RValue(createOptionalClassInstanceActions(null).get(0))));
 		}
+		return actions;
+	}
+
+	private static List<Action> createUnorderedParamClassInstanceAndReturnActions(String classType, Type type, List<RValue> parameters) {
+		List<Action> actions = new ArrayList<Action>(1);
+		actions.add(new ReturnAction(new RValue(createUnorderedParamClassInstanceActions(classType, type, parameters).get(0))));
 		return actions;
 	}
 
@@ -217,6 +233,8 @@ public final class SemLangFactory {
 				Type type = nonterminal.getReturnType();
 				if (type instanceof OptionalType) {
 					rValues.add(new RValue(symbol));
+				} else if (type instanceof UnorderedParamType) {
+					rValues.add(new RValue(new ConvertUnorderedParamToObjectAction(((UnorderedParamType) type), new RValue(symbol))));
 				} else if (type instanceof ComponentType /*&& !(type instanceof ListType)*/) {
 					rValues.add(new RValue(new ConvertListToCollectionAction(((ComponentType) type), new RValue(symbol))));
 				} else {

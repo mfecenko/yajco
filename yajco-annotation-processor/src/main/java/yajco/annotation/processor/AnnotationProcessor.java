@@ -464,9 +464,16 @@ public class AnnotationProcessor extends AbstractProcessor {
                 addTokenParts(notation, constructor.getAnnotation(Before.class).value());
             }
 
-            for (VariableElement paramElement : constructor.getParameters()) {
-                processParameter(concept, notation, paramElement);
+            // @UnorderedParameters annotation.
+            UnorderedParameters unorderedParametersAnnotation = constructor.getAnnotation(UnorderedParameters.class);
+            if (unorderedParametersAnnotation != null) {
+                processUnorderedParamsConstructor(concept, constructor, notation, unorderedParametersAnnotation);
+            } else {
+                for (VariableElement paramElement : constructor.getParameters()) {
+                    processParameter(concept, notation, paramElement);
+                }
             }
+
 
             // @After annotation.
             if (constructor.getAnnotation(After.class) != null) {
@@ -481,6 +488,30 @@ public class AnnotationProcessor extends AbstractProcessor {
             //TODO: odstranit pri prenesesni @Operator na triedu
             // Add concept pattern from annotations (Type).
             addPatternsFromAnnotations(constructor, concept);
+        }
+    }
+
+    /**
+     * Processes constructor annotated with @UnorderedParameters annotation.
+     *
+     * @param concept Language concept.
+     * @param notation Language concept notation.
+     * @param unorderedParametersAnnotation UnorderedParameters annotation
+     */
+    private void processUnorderedParamsConstructor(Concept concept, ExecutableElement constructor, Notation notation, UnorderedParameters unorderedParametersAnnotation) {
+        for (VariableElement paramElement : constructor.getParameters()) {
+            if (Arrays.asList(unorderedParametersAnnotation.exclude()).contains(paramElement.getSimpleName().toString())) {
+                processParameter(concept, notation, paramElement);
+            } else if (getType(paramElement.asType()) instanceof OptionalType)  {
+                UnorderedParamPart unorderedParamPart = new UnorderedParamPart(null);
+                OptionalPart optionalPart = (OptionalPart) processCompoundParameter(concept, paramElement, new OptionalPart(null));
+                unorderedParamPart.addPart(optionalPart);
+                notation.addPart(unorderedParamPart);
+            } else {
+                UnorderedParamPart unorderedParamPart = new UnorderedParamPart(null);
+                processCompoundParameter(concept, paramElement, unorderedParamPart);
+                notation.addPart(unorderedParamPart);
+            }
         }
     }
 
@@ -538,7 +569,7 @@ public class AnnotationProcessor extends AbstractProcessor {
     private void processParameter(Concept concept, Notation notation, VariableElement paramElement) {
         Type type = getType(paramElement.asType());
         if (type instanceof OptionalType) {
-            OptionalPart optionalPart = processOptionalParameter(concept, paramElement);
+            OptionalPart optionalPart = (OptionalPart) processCompoundParameter(concept, paramElement, new OptionalPart(null));
             notation.addPart(optionalPart);
         } else {
             // @Before annotation.
@@ -585,19 +616,19 @@ public class AnnotationProcessor extends AbstractProcessor {
     }
 
     /**
-     * Processes optional parameters.
+     * Processes compound parameters (Parameters which know their whole concrete syntax).
      *
      * @param concept Language concept.
      * @param paramElement Parameter of constructor or factory method.
-     * @return OptionalPart
+     * @param notationPart Compound notation part.
+     *
+     * @return Compound notation part.
      */
-    private OptionalPart processOptionalParameter(Concept concept, VariableElement paramElement) {
-        OptionalPart optionalPart = new OptionalPart(null);
-
+    private CompoundNotationPart processCompoundParameter(Concept concept, VariableElement paramElement, CompoundNotationPart notationPart) {
         // @ABefore annotation.
         if (paramElement.getAnnotation(Before.class) != null) {
             for (String value : paramElement.getAnnotation(Before.class).value()) {
-                optionalPart.addPart(new TokenPart(value));
+                notationPart.addPart(new TokenPart(value));
             }
         }
 
@@ -616,7 +647,7 @@ public class AnnotationProcessor extends AbstractProcessor {
                 type = getSimpleType(typeMirror);
             }
             LocalVariablePart localVariablePart = new LocalVariablePart(paramName, type, paramElement);
-            optionalPart.addPart(localVariablePart);
+            notationPart.addPart(localVariablePart);
             part = processReferencedConcept(concept, paramElement, references, localVariablePart);
         } else { // Property reference.
             Property property = concept.getProperty(paramName);
@@ -626,7 +657,7 @@ public class AnnotationProcessor extends AbstractProcessor {
             }
 
             part = new PropertyReferencePart(property, paramElement);
-            optionalPart.addPart(part);
+            notationPart.addPart(part);
         }
 
         if (tokenAnnotation != null) {
@@ -639,10 +670,11 @@ public class AnnotationProcessor extends AbstractProcessor {
         // @After annotation.
         if (paramElement.getAnnotation(After.class) != null) {
             for (String value : paramElement.getAnnotation(After.class).value()) {
-                optionalPart.addPart(new TokenPart(value));
+                notationPart.addPart(new TokenPart(value));
             }
         }
-        return optionalPart;
+
+        return notationPart;
     }
 
     /**

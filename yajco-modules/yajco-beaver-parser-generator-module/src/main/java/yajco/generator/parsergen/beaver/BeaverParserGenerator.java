@@ -239,6 +239,8 @@ public class BeaverParserGenerator {
         } else if (type instanceof ReferenceType) {
             ReferenceType refType = (ReferenceType) type;
             return Utilities.getFullConceptClassName(language, refType.getConcept());
+        } else if (type instanceof GeneralType) {
+            return "SymbolUnorderedParam";
         } else if (type instanceof ComponentType) {
             ComponentType innerType = (ComponentType) type;
             //DOMINIK TEST
@@ -255,6 +257,8 @@ public class BeaverParserGenerator {
                 return "java.util.Set<" + innerTypeString + ">";
             } else if (type instanceof OptionalType) {
                 return "java.util.Optional<" + innerTypeString + ">";
+            } else if(type instanceof UnorderedParamType) {
+                return parserPackageName + ".SymbolUnorderedParam";
             } else {
                 throw new IllegalArgumentException("Unknown component type detected: '" + type.getClass().getCanonicalName() + "'!");
             }

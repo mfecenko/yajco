@@ -23,6 +23,17 @@ public class SymbolListImpl<T> extends Symbol implements List<T> {
 		list = new ArrayList<T>(initialCapacity);
 	}
 
+	public T getByName(String name) {
+		for (T item: this.list) {
+			if (item instanceof SymbolUnorderedParam) {
+				if (((SymbolUnorderedParam) item).getVarName().equals(name)) {
+					return item;
+				}
+			}
+		}
+		return null;
+	}
+
 	public int size() {
 		return list.size();
 	}

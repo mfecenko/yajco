@@ -78,6 +78,12 @@ public class SemLangToJavaTranslator {
 			case CREATE_OPTIONAL_CLASS_INST:
 				translateCreateOptionalClassInstanceAction((CreateOptionalClassInstanceAction) action, writer);
 				break;
+			case CREATE_UNORDERED_PARAM_CLASS_INST:
+				translateCreateUnorderedParamClassInstanceAction((CreateUnorderedParamClassInstanceAction) action, writer);
+				break;
+			case CONVERT_UNORDERED_PARAM_TO_OBJECT:
+				translateConvertUnorderedParamToObjectAction((ConvertUnorderedParamToObjectAction) action, writer);
+				break;
 			default:
 				throw new IllegalArgumentException("Unknown SemLang action detected: '" + action.getClass().getCanonicalName() + "'!");
 		}
@@ -154,6 +160,21 @@ public class SemLangToJavaTranslator {
 		}
 	}
 
+	private void translateConvertUnorderedParamToObjectAction(ConvertUnorderedParamToObjectAction action, PrintStream writer) {
+		RValue rValue = action.getRValue();
+		String varName = rValue.getSymbol().getVarName();
+		if (varName.contains("params")) {
+			String variable = varName.split("_")[0];
+			String arrayName = varName.split("_")[1];
+
+			writer.print("(" + typeToString(action.getResultInnerType()) + ") ");
+			writer.print(arrayName + ".getWrappedObject()");
+			writer.print(".getByName(\"" + variable + "\").getValue()");
+		} else {
+			writer.print(".getWrappedObject()");
+		}
+	}
+
 	private void translateCreateCollectionInstanceAction(CreateCollectionInstanceAction action, PrintStream writer) {
 		if (action.getComponentType() instanceof ArrayType) {
 			writer.print("new ");
@@ -219,6 +240,12 @@ public class SemLangToJavaTranslator {
 		}
 	}
 
+	private void translateCreateUnorderedParamClassInstanceAction(CreateUnorderedParamClassInstanceAction action, PrintStream writer) {
+		writer.print("new SymbolUnorderedParam(");
+		writer.print(action.getParameters().get(0).getSymbol().getVarName() + ".getWrappedObject()");
+		writer.print(", \"" + action.getParameters().get(0).getSymbol().getVarName() + "\")");
+	}
+
 	private void translateCreateEnumInstanceAction(CreateEnumInstanceAction action, PrintStream writer) {
 		writer.print(action.getEnumType());
 		writer.print(".");
@@ -276,6 +303,8 @@ public class SemLangToJavaTranslator {
 			return componentTypeToString((ComponentType) type);
 		} else if (type instanceof ReferenceType) {
 			return referenceTypeToString((ReferenceType) type);
+		} else if (type instanceof GeneralType) {
+			return "SymbolUnorderedParam";
 		} else {
 			throw new IllegalArgumentException("Unknown type detected: '" + type.getClass().getCanonicalName() + "'!");
 		}
@@ -305,6 +334,8 @@ public class SemLangToJavaTranslator {
 			return "java.util.Set<" + typeToString(componentType.getComponentType()) + ">";
 		} else if (componentType instanceof OptionalType) {
 			return "java.util.Optional<" + typeToString(componentType.getComponentType()) + ">";
+		} else if (componentType instanceof UnorderedParamType) {
+			return "SymbolUnorderedParam";
 		} else {
 			throw new IllegalArgumentException("Unknown component type detected: '" + componentType.getClass().getCanonicalName() + "'!");
 		}
