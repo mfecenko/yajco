@@ -81,12 +81,26 @@ public class Grammar extends PatternSupport {
 		}
 	}
 
-	public NonterminalSymbol getSequenceNonterminalFor(String name, int min, int max, String sep) {
-		RangeEntry entry = new RangeEntry(name, min, max, sep);
+	public NonterminalSymbol getSequenceNonterminalFor(String name, int min, int max, String sep, boolean hasSharedPart) {
+		RangeEntry entry = new RangeEntry(name, min, max, sep, hasSharedPart);
 		if (sequencePool.containsKey(entry)) {
 			return sequencePool.get(entry);
 		}
 
+		return null;
+	}
+
+	public NonterminalSymbol getNonterminalByVarName(String varName) {
+		for (String key: nonterminals.keySet()) {
+			System.out.println("@@@@@ " + nonterminals.get(key).getName() + " " + nonterminals.get(key).getVarName());
+			if (nonterminals.get(key).getVarName() != null && nonterminals.get(key).getVarName().equals(varName)) {
+				return nonterminals.get(key);
+			}
+		}
+
+		for (String key: terminals.keySet()) {
+			System.out.println("@@@@@ " + terminals.get(key).getName() + " " + terminals.get(key).getVarName());
+		}
 		return null;
 	}
 
@@ -116,8 +130,8 @@ public class Grammar extends PatternSupport {
 		return null;
 	}
 
-	public void addSequence(String name, int min, int max, String sep, NonterminalSymbol nonterminal) {
-		sequencePool.put(new RangeEntry(name, min, max, sep), nonterminal);
+	public void addSequence(String name, int min, int max, String sep, NonterminalSymbol nonterminal, boolean hasSharedPart) {
+		sequencePool.put(new RangeEntry(name, min, max, sep, hasSharedPart), nonterminal);
 	}
 
 	public Map<String, NonterminalSymbol> getNonterminals() {
@@ -176,12 +190,14 @@ public class Grammar extends PatternSupport {
 		private int minOccurs;
 		private int maxOccurs;
 		private String separator;
+		private boolean hasSharedPart;
 
-		public RangeEntry(String name, int minOccurs, int maxOccurs, String separator) {
+		public RangeEntry(String name, int minOccurs, int maxOccurs, String separator, boolean hasSharedPart) {
 			this.name = name;
 			this.minOccurs = minOccurs;
 			this.maxOccurs = maxOccurs;
 			this.separator = separator;
+			this.hasSharedPart = hasSharedPart;
 		}
 
 		public String getName() {
@@ -200,10 +216,15 @@ public class Grammar extends PatternSupport {
 			return separator;
 		}
 
+		public Boolean hasSharedPart() {
+			return hasSharedPart;
+		}
+
 		@Override
 		public String toString() {
 			String sep = this.separator != null ? this.separator : "";
-			return name + "(from " + minOccurs + " to " + maxOccurs + " sep '" + sep + "')";
+			String sharedPart = this.hasSharedPart ? " with shared part " : "";
+			return name + "(from " + minOccurs + " to " + maxOccurs + " sep '" + sep + "'" + sharedPart + ")";
 		}
 
 		@Override

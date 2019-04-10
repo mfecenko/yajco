@@ -1,5 +1,6 @@
 package yajco.parser.beaver;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -21,6 +22,21 @@ public class SymbolListImpl<T> extends Symbol implements List<T> {
 
 	public SymbolListImpl(int initialCapacity) {
 		list = new ArrayList<T>(initialCapacity);
+	}
+
+	public List<T> getUpdatedList(String methodName, Object value, Class<?> type) {
+		for (T item: list) {
+			try {
+				item.getClass().getMethod(methodName, type).invoke(item, value);
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			} catch (InvocationTargetException e) {
+				e.printStackTrace();
+			} catch (NoSuchMethodException e) {
+				e.printStackTrace();
+			}
+		}
+		return list;
 	}
 
 	public int size() {

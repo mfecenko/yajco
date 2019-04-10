@@ -1,6 +1,7 @@
 package yajco.generator.parsergen.beaver.semlang.translator;
 
 import yajco.ReferenceResolver;
+import yajco.grammar.Symbol;
 import yajco.grammar.semlang.*;
 import yajco.model.Language;
 import yajco.model.type.*;
@@ -59,6 +60,9 @@ public class SemLangToJavaTranslator {
 				break;
 			case CONVERT_LIST_TO_COLLECTION:
 				translateConvertListToCollectionAction((ConvertListToCollectionAction) action, writer);
+				break;
+			case CONVERT_LIST_TO_COLLECTION_AND_SET_SHARED:
+				translateConvertListToCollectionAndSetSharedAction((ConvertListToCollectionAndSetSharedAction) action, writer);
 				break;
 			case CREATE_COLLECTION_INST:
 				translateCreateCollectionInstanceAction((CreateCollectionInstanceAction) action, writer);
@@ -153,6 +157,40 @@ public class SemLangToJavaTranslator {
 			throw new IllegalArgumentException("Unknown component type detected: '" + action.getResultCollectionType().getClass().getCanonicalName() + "'!");
 		}
 	}
+
+	private void translateConvertListToCollectionAndSetSharedAction(ConvertListToCollectionAndSetSharedAction action, PrintStream writer) {
+		if (action.getResultCollectionType() instanceof ArrayType) {
+			translateSharedSymbol(action.getRValue(), action.getSharedSymbol(), writer);
+			writer.print(".toArray(new ");
+			writer.print(typeToString(action.getResultCollectionInnerType()));
+			writer.print("[]{})");
+		} else if (action.getResultCollectionType() instanceof ListType) {
+			writer.print("new java.util.ArrayList<");
+			writer.print(typeToString(action.getResultCollectionInnerType()));
+			writer.print(">(");
+			translateSharedSymbol(action.getRValue(), action.getSharedSymbol(), writer);
+			writer.print(")");
+		} else if (action.getResultCollectionType() instanceof SetType) {
+			writer.print("new java.util.HashSet<");
+			writer.print(typeToString(action.getResultCollectionInnerType()));
+			writer.print(">(");
+			translateSharedSymbol(action.getRValue(), action.getSharedSymbol(), writer);
+			writer.print(")");
+		} else if (action.getResultCollectionType() instanceof OptionalType) {
+			writer.print("java.util.Optional.empty()");
+		} else {
+			throw new IllegalArgumentException("Unknown component type detected: '" + action.getResultCollectionType().getClass().getCanonicalName() + "'!");
+		}
+	}
+
+	private void translateSharedSymbol(RValue rValue, Symbol sharedSymbol, PrintStream writer) {
+		translateLValue(rValue, writer);
+		writer.print(".getWrappedObject()");
+		writer.print(".getUpdatedList(\"set" + sharedSymbol.getName() + "\"");
+		writer.print(", " + sharedSymbol.getVarName() + ".getWrappedObject()");
+		writer.print(", " + typeToString(sharedSymbol.getReturnType()) + ".class)");
+	}
+
 
 	private void translateCreateCollectionInstanceAction(CreateCollectionInstanceAction action, PrintStream writer) {
 		if (action.getComponentType() instanceof ArrayType) {
