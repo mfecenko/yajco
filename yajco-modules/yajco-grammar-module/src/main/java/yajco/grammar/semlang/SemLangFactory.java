@@ -23,12 +23,16 @@ public final class SemLangFactory {
 		return createClassInstanceAndReturnActions(classType, null, symbolsToRValues(symbols, null));
 	}
 
+	public static List<Action> createNewUnorderedParamClassInstanceAndReturnActions(List<Symbol> symbols) {
+		return createUnorderedParamClassInstanceAndReturnActions(symbolsToRValues(symbols, null));
+	}
+
 	public static List<Action> createNewOptionalClassInstanceAndReturnActions(List<Symbol> symbols) {
 		return createOptionalClassInstanceAndReturnActions(symbolsToRValues(symbols, null));
 	}
 
-	public static List<Action> createNewUnorderedParamClassInstanceAndReturnActions(List<Symbol> symbols) {
-		return createUnorderedParamClassInstanceAndReturnActions(symbolsToRValues(symbols, null));
+	public static List<Action> createNewStringTokenClassInstanceAndReturnActions(List<Symbol> symbols) {
+		return createStringTokenClassInstanceAndReturnActions(symbolsToRValues(symbols, null));
 	}
 
 	public static List<Action> createFactoryClassInstanceActions(String classType, String factoryMethodName, List<Symbol> symbols) {
@@ -154,6 +158,12 @@ public final class SemLangFactory {
 		return actions;
 	}
 
+    private static List<Action> createStringTokenClassInstanceActions(RValue parameter) {
+        List<Action> actions = new ArrayList<Action>(1);
+        actions.add(new CreateSymbolStringTokenClassInstanceAction(parameter));
+        return actions;
+    }
+
 	private static List<Action> createClassInstanceAndReturnActions(String classType, String factoryMethodName, List<RValue> parameters) {
 		List<Action> actions = new ArrayList<Action>(1);
 		actions.add(new ReturnAction(new RValue(createClassInstanceActions(classType, factoryMethodName, parameters).get(0))));
@@ -176,7 +186,14 @@ public final class SemLangFactory {
 		return actions;
 	}
 
-	private static List<Action> createReferenceResolverRegisterActions(String classType, String factoryMethodName, List<RValue> parameters) {
+	private static List<Action> createStringTokenClassInstanceAndReturnActions(List<RValue> parameters) {
+		List<Action> actions = new ArrayList<Action>(1);
+		actions.add(new ReturnAction(new RValue(createStringTokenClassInstanceActions(parameters.get(0)).get(0))));
+		return actions;
+	}
+
+
+    private static List<Action> createReferenceResolverRegisterActions(String classType, String factoryMethodName, List<RValue> parameters) {
 		List<Action> actions = new ArrayList<Action>(1);
 		if (factoryMethodName == null || factoryMethodName.equals("")) {
 			actions.add(new ReferenceResolverRegisterAction(classType, parameters));

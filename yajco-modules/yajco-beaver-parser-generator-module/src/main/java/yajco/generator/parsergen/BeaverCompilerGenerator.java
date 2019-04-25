@@ -38,6 +38,7 @@ public class BeaverCompilerGenerator implements CompilerGenerator {
     private static final String SYMBOL_LINKED_HASH_SET_IMPL_CLASS_TEMPLATE = "/yajco/generator/parsergen/beaver/templates/SymbolLinkedHashSetImplClassTemplate.vm";
     private static final String SYMBOL_HASH_MAP_IMPL_CLASS_TEMPLATE = "/yajco/generator/parsergen/beaver/templates/SymbolHashMapImplClassTemplate.vm";
     private static final String SYMBOL_UNORDERED_PARAM_CLASS_TEMPLATE = "/yajco/generator/parsergen/beaver/templates/SymbolUnorderedParamClassTemplate.vm";
+    private static final String SYMBOL_STRING_TOKEN_CLASS_TEMPLATE = "/yajco/generator/parsergen/beaver/templates/SymbolStringTokenClassTemplate.vm";
     private static final String SYMBOL_WRAPPER_CLASS_TEMPLATE = "/yajco/generator/parsergen/beaver/templates/SymbolWrapperClassTemplate.vm";
     private static final BeaverParserGenerator beaverParGen = BeaverParserGenerator.getInstance();
     private static final YajcoModelToBNFGrammarTranslator modelToBNFGrammarTranslator = YajcoModelToBNFGrammarTranslator.getInstance();
@@ -132,6 +133,14 @@ public class BeaverCompilerGenerator implements CompilerGenerator {
         fileObject = filer.createSourceFile(parserPackageName + "." + "SymbolListImpl");
         writer = fileObject.openWriter(); //new FileWriter(file);
         writer.write(generateSymbolListImplClass(parserPackageName));
+        writer.flush();
+        writer.close();
+
+        // trieda SymbolStringToken
+        //file = Utilities.createFile(filer, parserPackageName, "SymbolStringToken.java");
+        fileObject = filer.createSourceFile(parserPackageName + "." + "SymbolStringToken");
+        writer = fileObject.openWriter(); //new FileWriter(file);
+        writer.write(generateSymbolStringTokenClass(parserPackageName));
         writer.flush();
         writer.close();
 
@@ -257,6 +266,15 @@ public class BeaverCompilerGenerator implements CompilerGenerator {
         context.put("parserPackageName", parserPackageName);
         StringWriter writer = new StringWriter();
         engine.evaluate(context, writer, "", new InputStreamReader(getClass().getResourceAsStream(SYMBOL_LIST_IMPL_CLASS_TEMPLATE)));
+
+        return writer.toString();
+    }
+
+    private String generateSymbolStringTokenClass(String parserPackageName) throws IOException {
+        VelocityContext context = new VelocityContext();
+        context.put("parserPackageName", parserPackageName);
+        StringWriter writer = new StringWriter();
+        engine.evaluate(context, writer, "", new InputStreamReader(getClass().getResourceAsStream(SYMBOL_STRING_TOKEN_CLASS_TEMPLATE)));
 
         return writer.toString();
     }

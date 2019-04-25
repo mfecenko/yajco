@@ -80,6 +80,7 @@ public class BeaverParserGenerator {
         writer.println("%import \"" + parserPackageName + ".SymbolHashMapImpl\";");
         writer.println("%import \"" + parserPackageName + ".SymbolUnorderedParam\";");
         writer.println("%import \"" + parserPackageName + ".SymbolListImplWithShared\";");
+        writer.println("%import \"" + parserPackageName + ".SymbolStringToken\";");
         //DOMINIK TEST
         writer.println("%import \"" + parserPackageName + ".SymbolWrapper\";");
         // END
@@ -245,6 +246,8 @@ public class BeaverParserGenerator {
             return Utilities.getFullConceptClassName(language, refType.getConcept());
         } else if (type instanceof ObjectType) {
             return "Object";
+        } else if (type instanceof StringTokenType) {
+            return parserPackageName + ".SymbolStringToken";
         } else if (type instanceof ComponentType) {
             ComponentType innerType = (ComponentType) type;
             //DOMINIK TEST

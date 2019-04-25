@@ -193,6 +193,8 @@ public class Printer {
 			printOptionalPart(writer, (OptionalPart) part);
 		}  else if (part instanceof UnorderedParamPart) {
 			printUnorderedParamPart(writer, (UnorderedParamPart) part);
+		} else if (part instanceof StringTokenPart) {
+			printStringTokenPart(writer, (StringTokenPart) part);
 		}
 	}
 
@@ -213,6 +215,12 @@ public class Printer {
 		}
 		writer.write(")?");
 	}
+
+    private void printStringTokenPart(PrintWriter writer, StringTokenPart part) {
+        writer.write("String token part [");
+        writer.write(part.getTokenPart().toString());
+        writer.write("]");
+    }
 
 	private void print(PrintWriter writer, TokenPart part) {
 		writer.print("\"" + part.getToken() + "\"");
