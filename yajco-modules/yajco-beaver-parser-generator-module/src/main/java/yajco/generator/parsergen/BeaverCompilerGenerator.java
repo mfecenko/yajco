@@ -35,6 +35,8 @@ public class BeaverCompilerGenerator implements CompilerGenerator {
     private static final String BEAVER_PARSE_EXCEPTION_CLASS_TEMPLATE = "/yajco/generator/parsergen/beaver/templates/LALRParseExceptionClassTemplate.vm";
     private static final String SYMBOL_LIST_IMPL_CLASS_TEMPLATE = "/yajco/generator/parsergen/beaver/templates/SymbolListImplClassTemplate.vm";
     private static final String SYMBOL_LINKED_HASH_SET_IMPL_CLASS_TEMPLATE = "/yajco/generator/parsergen/beaver/templates/SymbolLinkedHashSetImplClassTemplate.vm";
+    private static final String SYMBOL_HASH_MAP_IMPL_CLASS_TEMPLATE = "/yajco/generator/parsergen/beaver/templates/SymbolHashMapImplClassTemplate.vm";
+    private static final String SYMBOL_UNORDERED_PARAM_CLASS_TEMPLATE = "/yajco/generator/parsergen/beaver/templates/SymbolUnorderedParamClassTemplate.vm";
     private static final String SYMBOL_WRAPPER_CLASS_TEMPLATE = "/yajco/generator/parsergen/beaver/templates/SymbolWrapperClassTemplate.vm";
     private static final BeaverParserGenerator beaverParGen = BeaverParserGenerator.getInstance();
     private static final YajcoModelToBNFGrammarTranslator modelToBNFGrammarTranslator = YajcoModelToBNFGrammarTranslator.getInstance();
@@ -140,6 +142,22 @@ public class BeaverCompilerGenerator implements CompilerGenerator {
         writer.flush();
         writer.close();
 
+        // trieda SymbolHashMapImpl
+        //file = Utilities.createFile(filer, parserPackageName, "SymbolHashMapImpl.java");
+        fileObject = filer.createSourceFile(parserPackageName + "." + "SymbolHashMapImpl");
+        writer = fileObject.openWriter(); //new FileWriter(file);
+        writer.write(generateSymbolHashMapImplClass(parserPackageName));
+        writer.flush();
+        writer.close();
+
+        // trieda SymbolUnorderedParam
+        //file = Utilities.createFile(filer, parserPackageName, "SymbolUnorderedParam.java");
+        fileObject = filer.createSourceFile(parserPackageName + "." + "SymbolUnorderedParam");
+        writer = fileObject.openWriter(); //new FileWriter(file);
+        writer.write(generateSymbolUnorderedParamClass(parserPackageName));
+        writer.flush();
+        writer.close();
+
         // trieda SymbolWrapper
         //file = Utilities.createFile(filer, parserPackageName, "SymbolWrapper.java");
         fileObject = filer.createSourceFile(parserPackageName + "." + "SymbolWrapper");
@@ -241,6 +259,26 @@ public class BeaverCompilerGenerator implements CompilerGenerator {
         engine.evaluate(context, writer, "", new InputStreamReader(getClass().getResourceAsStream(SYMBOL_LINKED_HASH_SET_IMPL_CLASS_TEMPLATE)));
         return writer.toString();
     }
+
+    private String generateSymbolHashMapImplClass(String parserPackageName) throws IOException {
+        VelocityContext context = new VelocityContext();
+        context.put("parserPackageName", parserPackageName);
+        StringWriter writer = new StringWriter();
+        engine.evaluate(context, writer, "", new InputStreamReader(getClass().getResourceAsStream(SYMBOL_HASH_MAP_IMPL_CLASS_TEMPLATE)));
+
+        return writer.toString();
+    }
+
+    private String generateSymbolUnorderedParamClass(String parserPackageName) throws IOException {
+        VelocityContext context = new VelocityContext();
+        context.put("parserPackageName", parserPackageName);
+        StringWriter writer = new StringWriter();
+        engine.evaluate(context, writer, "", new InputStreamReader(getClass().getResourceAsStream(SYMBOL_UNORDERED_PARAM_CLASS_TEMPLATE)));
+
+        return writer.toString();
+    }
+
+
 
     private String generateSymbolWrapperClass(String parserPackageName) throws IOException {
         VelocityContext context = new VelocityContext();

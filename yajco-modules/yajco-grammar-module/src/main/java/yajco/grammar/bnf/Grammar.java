@@ -116,9 +116,9 @@ public class Grammar extends PatternSupport {
 		return null;
 	}
 
-	public void addSequence(String name, int min, int max, String sep, boolean unique, NonterminalSymbol nonterminal) {
-		sequencePool.put(new RangeEntry(name, min, max, sep, unique), nonterminal);
-	}
+    public void addSequence(String name, int min, int max, String sep, boolean unique, NonterminalSymbol nonterminal) {
+        sequencePool.put(new RangeEntry(name, min, max, sep, unique), nonterminal);
+    }
 
 	public Map<String, NonterminalSymbol> getNonterminals() {
 		return nonterminals;

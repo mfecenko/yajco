@@ -78,6 +78,12 @@ public class SemLangToJavaTranslator {
 			case CREATE_OPTIONAL_CLASS_INST:
 				translateCreateOptionalClassInstanceAction((CreateOptionalClassInstanceAction) action, writer);
 				break;
+			case CREATE_UNORDERED_PARAM_CLASS_INST:
+				translateCreateUnorderedParamClassInstanceAction((CreateUnorderedParamClassInstanceAction) action, writer);
+				break;
+			case CONVERT_UNORDERED_PARAMS_TO_OBJECT:
+				translateConvertUnorderedParamsToObjectAction((ConvertUnorderedParamsToObjectAction) action, writer);
+				break;
 			default:
 				throw new IllegalArgumentException("Unknown SemLang action detected: '" + action.getClass().getCanonicalName() + "'!");
 		}
@@ -148,7 +154,13 @@ public class SemLangToJavaTranslator {
 			translateRValue(action.getRValue(), writer);
 			writer.print(")");
 		} else if (action.getResultCollectionType() instanceof OrderedSetType) {
-			writer.print("new java.util.LinkedHashSet<");
+            writer.print("new java.util.LinkedHashSet<");
+            writer.print(typeToString(action.getResultCollectionInnerType()));
+            writer.print(">(");
+            translateRValue(action.getRValue(), writer);
+            writer.print(")");
+        } else if (action.getResultCollectionType() instanceof HashMapType) {
+			writer.print("new java.util.HashMap<String, ");
 			writer.print(typeToString(action.getResultCollectionInnerType()));
 			writer.print(">(");
 			translateRValue(action.getRValue(), writer);
@@ -158,6 +170,14 @@ public class SemLangToJavaTranslator {
 		} else {
 			throw new IllegalArgumentException("Unknown component type detected: '" + action.getResultCollectionType().getClass().getCanonicalName() + "'!");
 		}
+	}
+
+	private void translateConvertUnorderedParamsToObjectAction(ConvertUnorderedParamsToObjectAction action, PrintStream writer) {
+		RValue rValue = action.getRValue();
+		String varName = rValue.getSymbol().getVarName();
+        writer.print("(" + typeToString(action.getResultInnerType()) + ") ");
+        writer.print("params.getWrappedObject()");
+        writer.print(".get(\"" + varName + "\")");
 	}
 
 	private void translateCreateCollectionInstanceAction(CreateCollectionInstanceAction action, PrintStream writer) {
@@ -171,7 +191,11 @@ public class SemLangToJavaTranslator {
 			writer.print(typeToString(action.getInnerType()));
 			writer.print(">()");
 		} else if (action.getComponentType() instanceof SetType) {
-			writer.print("new java.util.HashSet<");
+            writer.print("new java.util.HashSet<");
+            writer.print(typeToString(action.getInnerType()));
+            writer.print(">()");
+        } else if (action.getComponentType() instanceof HashMapType) {
+			writer.print("new SymbolHashMapImpl<String, ");
 			writer.print(typeToString(action.getInnerType()));
 			writer.print(">()");
 		} else if (action.getComponentType() instanceof OrderedSetType) {
@@ -192,10 +216,18 @@ public class SemLangToJavaTranslator {
 		if (action.getLValue().getSymbol() != null) {
 			writer.print(".getWrappedObject()");
 		}
-		writer.print(".add(");
-		//writer.print(".add(");
-		translateRValue(action.getRValue(), writer);
-		writer.print("); ");
+		if (action.getComponentType() != null && action.getComponentType() instanceof HashMapType) {
+			writer.print(".put(");
+			translateRValue(action.getRValue(), writer);
+			writer.print(".getVarName(), ");
+			translateRValue(action.getRValue(), writer);
+			writer.print(".getValue()");
+			writer.print("); ");
+		} else {
+			writer.print(".add(");
+			translateRValue(action.getRValue(), writer);
+			writer.print("); ");
+		}
 	}
 
 	private void translateCreateClassInstanceAction(CreateClassInstanceAction action, PrintStream writer) {
@@ -217,6 +249,12 @@ public class SemLangToJavaTranslator {
 			}
 		}
 		writer.print(")");
+	}
+
+	private void translateCreateUnorderedParamClassInstanceAction(CreateUnorderedParamClassInstanceAction action, PrintStream writer) {
+		writer.print("new SymbolUnorderedParam(");
+		writer.print(action.getParameters().get(0).getSymbol().getVarName() + ".getWrappedObject()");
+		writer.print(", \"" + action.getParameters().get(0).getSymbol().getVarName() + "\")");
 	}
 
 	private void translateCreateOptionalClassInstanceAction(CreateOptionalClassInstanceAction action, PrintStream writer) {
@@ -286,6 +324,8 @@ public class SemLangToJavaTranslator {
 			return componentTypeToString((ComponentType) type);
 		} else if (type instanceof ReferenceType) {
 			return referenceTypeToString((ReferenceType) type);
+		} else if (type instanceof ObjectType) {
+			return "Object";
 		} else {
 			throw new IllegalArgumentException("Unknown type detected: '" + type.getClass().getCanonicalName() + "'!");
 		}
@@ -315,6 +355,10 @@ public class SemLangToJavaTranslator {
 			return "java.util.Set<" + typeToString(componentType.getComponentType()) + ">";
 		} else if (componentType instanceof OptionalType) {
 			return "java.util.Optional<" + typeToString(componentType.getComponentType()) + ">";
+		} else if (componentType instanceof HashMapType) {
+			return "java.util.Map<String, " + typeToString(componentType.getComponentType()) + ">";
+		} else if (componentType instanceof UnorderedParamType) {
+			return "SymbolUnorderedParam";
 		} else {
 			throw new IllegalArgumentException("Unknown component type detected: '" + componentType.getClass().getCanonicalName() + "'!");
 		}
