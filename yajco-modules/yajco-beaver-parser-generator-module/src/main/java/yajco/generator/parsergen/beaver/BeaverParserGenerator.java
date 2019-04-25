@@ -79,6 +79,7 @@ public class BeaverParserGenerator {
         writer.println("%import \"" + parserPackageName + ".SymbolLinkedHashSetImpl\";");
         writer.println("%import \"" + parserPackageName + ".SymbolHashMapImpl\";");
         writer.println("%import \"" + parserPackageName + ".SymbolUnorderedParam\";");
+        writer.println("%import \"" + parserPackageName + ".SymbolListImplWithShared\";");
         //DOMINIK TEST
         writer.println("%import \"" + parserPackageName + ".SymbolWrapper\";");
         // END
@@ -256,6 +257,8 @@ public class BeaverParserGenerator {
                 // problem v beaver-i sposobuje nutnost tohoto riadku
                 return parserPackageName + ".SymbolListImpl" + "<" + innerTypeString + ">";
                 //return "java.util.List<" + innerTypeString + ">";
+            } else if (type instanceof ListTypeWithShared) {
+                return parserPackageName + ".SymbolListImplWithShared" + "<" + innerTypeString + ">";
             } else if (type instanceof SetType || type instanceof OrderedSetType) {
                 return "java.util.Set<" + innerTypeString + ">";
             } else if (type instanceof HashMapType) {

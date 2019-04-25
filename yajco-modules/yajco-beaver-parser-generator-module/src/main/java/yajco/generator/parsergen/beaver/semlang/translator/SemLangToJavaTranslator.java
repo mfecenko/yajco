@@ -84,6 +84,9 @@ public class SemLangToJavaTranslator {
 			case CONVERT_UNORDERED_PARAMS_TO_OBJECT:
 				translateConvertUnorderedParamsToObjectAction((ConvertUnorderedParamsToObjectAction) action, writer);
 				break;
+			case CONVERT_LIST_WITH_SHARED_TO_COLLECTION:
+				translateConvertListWithSharedToCollectionAction((ConvertListWithSharedToCollectionAction) action, writer);
+				break;
 			default:
 				throw new IllegalArgumentException("Unknown SemLang action detected: '" + action.getClass().getCanonicalName() + "'!");
 		}
@@ -180,6 +183,37 @@ public class SemLangToJavaTranslator {
         writer.print(".get(\"" + varName + "\")");
 	}
 
+    private void translateConvertListWithSharedToCollectionAction(ConvertListWithSharedToCollectionAction action, PrintStream writer) {
+        if (action.getResultCollectionType() instanceof ArrayType) {
+            translateSharedSymbol(action, writer);
+            writer.print(".toArray(new ");
+            writer.print(typeToString(action.getResultCollectionInnerType()));
+            writer.print("[]{})");
+        } else if (action.getResultCollectionType() instanceof ListType || action.getResultCollectionType() instanceof ListTypeWithShared) {
+            writer.print("new java.util.ArrayList<");
+            writer.print(typeToString(action.getResultCollectionInnerType()));
+            writer.print(">(");
+            translateSharedSymbol(action, writer);
+            writer.print(")");
+        } else if (action.getResultCollectionType() instanceof SetType) {
+            writer.print("new java.util.HashSet<");
+            writer.print(typeToString(action.getResultCollectionInnerType()));
+            writer.print(">(");
+            translateSharedSymbol(action, writer);
+            writer.print(")");
+        } else if (action.getResultCollectionType() instanceof OptionalType) {
+            writer.print("java.util.Optional.empty()");
+        } else {
+            throw new IllegalArgumentException("Unknown component type detected: '" + action.getResultCollectionType().getClass().getCanonicalName() + "'!");
+        }
+    }
+
+    private void translateSharedSymbol(ConvertListWithSharedToCollectionAction action, PrintStream writer) {
+        translateLValue(action.getRValue(), writer);
+        writer.print(".getWrappedObject()");
+        writer.print(".getUpdatedList(\""  + action.getSharedPartName() +  "\")");
+    }
+
 	private void translateCreateCollectionInstanceAction(CreateCollectionInstanceAction action, PrintStream writer) {
 		if (action.getComponentType() instanceof ArrayType) {
 			writer.print("new ");
@@ -188,6 +222,10 @@ public class SemLangToJavaTranslator {
 		} else if (action.getComponentType() instanceof ListType) {
 			//writer.print("new java.util.ArrayList<");
 			writer.print("new SymbolListImpl<");
+			writer.print(typeToString(action.getInnerType()));
+			writer.print(">()");
+		} else if (action.getComponentType() instanceof ListTypeWithShared) {
+			writer.print("new SymbolListImplWithShared<");
 			writer.print(typeToString(action.getInnerType()));
 			writer.print(">()");
 		} else if (action.getComponentType() instanceof SetType) {
@@ -216,15 +254,23 @@ public class SemLangToJavaTranslator {
 		if (action.getLValue().getSymbol() != null) {
 			writer.print(".getWrappedObject()");
 		}
-		if (action.getComponentType() != null && action.getComponentType() instanceof HashMapType) {
-			writer.print(".put(");
+
+
+        if (action.getComponentType() != null && action.getComponentType() instanceof HashMapType) {
+            writer.print(".put(");
+            translateRValue(action.getRValue(), writer);
+            writer.print(".getVarName(), ");
+            translateRValue(action.getRValue(), writer);
+            writer.print(".getValue()");
+            writer.print("); ");
+        } else if ((action.getLValue().getSymbol() != null && action.getLValue().getSymbol().getReturnType() instanceof ListTypeWithShared)
+				|| (action.getRValue().getSymbol() != null && action.getRValue().getSymbol().getReturnType() instanceof ListType)) {
+			writer.print(".addAll(");
 			translateRValue(action.getRValue(), writer);
-			writer.print(".getVarName(), ");
-			translateRValue(action.getRValue(), writer);
-			writer.print(".getValue()");
 			writer.print("); ");
 		} else {
 			writer.print(".add(");
+			//writer.print(".add(");
 			translateRValue(action.getRValue(), writer);
 			writer.print("); ");
 		}
@@ -349,7 +395,7 @@ public class SemLangToJavaTranslator {
 	private String componentTypeToString(ComponentType componentType) {
 		if (componentType instanceof ArrayType) {
 			return typeToString(componentType.getComponentType()) + "[]";
-		} else if (componentType instanceof ListType) {
+		} else if (componentType instanceof ListType || componentType instanceof ListTypeWithShared) {
 			return "java.util.List<" + typeToString(componentType.getComponentType()) + ">";
 		} else if (componentType instanceof SetType || componentType instanceof OrderedSetType) {
 			return "java.util.Set<" + typeToString(componentType.getComponentType()) + ">";
