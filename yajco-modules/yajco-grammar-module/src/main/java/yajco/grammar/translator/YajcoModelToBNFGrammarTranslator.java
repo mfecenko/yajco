@@ -259,7 +259,7 @@ public class YajcoModelToBNFGrammarTranslator {
         production.addAlternative(alternative);
 
         grammar.addProduction(production);
-        grammar.addSequence(lhs.getName(), this.unorderedParamNonterminals.size(), this.unorderedParamNonterminals.size(), null, false, lhs);
+        grammar.addSequence(lhs.getName(), this.unorderedParamNonterminals.size(), this.unorderedParamNonterminals.size(), null, false, null, lhs);
 
         return new NonterminalSymbol(lhs.getName(), new ObjectType(), DEFAULT_PARAMS_SYMBOL_VAR_NAME);
     }
@@ -520,7 +520,6 @@ public class YajcoModelToBNFGrammarTranslator {
         Type innerType = cmpType.getComponentType();
         Symbol symbol;
         String separator, sharedPartName;
-
         int min, max;
         boolean unique;
 
@@ -548,16 +547,16 @@ public class YajcoModelToBNFGrammarTranslator {
         min = rangePattern != null ? rangePattern.getMinOccurs() : 0;
         max = rangePattern != null ? rangePattern.getMaxOccurs() : Range.INFINITY;
 
-        NonterminalSymbol nonterminal = grammar.getSequenceNonterminalFor(symbol.toString(), min, max, separator, sharedPartName);
+        NonterminalSymbol nonterminal = grammar.getSequenceNonterminalFor(symbol.toString(), min, max, separator, unique, sharedPartName);
         if (nonterminal != null) {
             return new NonterminalSymbol(nonterminal.getName(), cmpType, nonterminal.getVarName());
         } else {
             if (cmpType instanceof OptionalType) {
                 return symbol;
             } else if (sharedPattern != null) {
-                return createSequenceProductionWithSharedFor(symbol, min, max, separator, cmpType, sharedPattern);
+                return createSequenceProductionWithSharedFor(symbol, min, max, separator, cmpType, sharedPattern, unique);
             } else {
-                return createSequenceProductionFor(symbol, min, max, separator, cmpType);
+                return createSequenceProductionFor(symbol, min, max, separator, cmpType, unique);
             }
         }
     }
@@ -567,6 +566,7 @@ public class YajcoModelToBNFGrammarTranslator {
         Symbol symbol;
         String separator, sharedPartName;
         int min, max;
+        boolean unique;
 
         if (innerType instanceof ReferenceType) {
             ReferenceType refType = (ReferenceType) innerType;
@@ -581,21 +581,23 @@ public class YajcoModelToBNFGrammarTranslator {
 
         Separator sepPattern = (Separator) part.getPattern(Separator.class);
         Range rangePattern = (Range) part.getPattern(Range.class);
+        UniqueValues uniqueValuesPattern = (UniqueValues) part.getPattern(UniqueValues.class);
         Shared sharedPattern = (Shared) part.getPattern(Shared.class);
 
         sharedPartName = sharedPattern != null ? sharedPattern.getValue() : "";
+        unique = uniqueValuesPattern != null;
         separator = sepPattern != null ? sepPattern.getValue() : "";
         min = rangePattern != null ? rangePattern.getMinOccurs() : 1;
         max = rangePattern != null ? rangePattern.getMaxOccurs() : Range.INFINITY;
 
-        NonterminalSymbol nonterminal = grammar.getSequenceNonterminalFor(symbol.toString(), min, max, separator, sharedPartName);
+        NonterminalSymbol nonterminal = grammar.getSequenceNonterminalFor(symbol.toString(), min, max, separator, unique, sharedPartName);
         if (nonterminal != null) {
             return new NonterminalSymbol(nonterminal.getName(), cmpType, nonterminal.getVarName());
         } else {
             if (sharedPattern != null) {
-                return createSequenceProductionWithSharedFor(symbol, min, max, separator, cmpType, sharedPattern);
+                return createSequenceProductionWithSharedFor(symbol, min, max, separator, cmpType, sharedPattern, unique);
             } else {
-                return createSequenceProductionFor(symbol, min, max, separator, cmpType);
+                return createSequenceProductionFor(symbol, min, max, separator, cmpType, unique);
             }
         }
     }
@@ -676,20 +678,20 @@ public class YajcoModelToBNFGrammarTranslator {
         }
 
         grammar.addProduction(production);
-        grammar.addSequence(symbol.toString(), minOccurs, maxOccurs, separator, null, lhs);
+        grammar.addSequence(symbol.toString(), minOccurs, maxOccurs, separator, false,null, lhs);
 
         return new NonterminalSymbol(lhs.getName(), cmpType);
     }
 
-    private NonterminalSymbol createSequenceProductionWithSharedFor(Symbol symbol, int minOccurs, int maxOccurs, String separator, ComponentType cmpType, Shared shared) {
-        NonterminalSymbol nonterminal = grammar.getSequenceNonterminalFor(symbol.toString(), minOccurs, maxOccurs, separator, null);
+    private NonterminalSymbol createSequenceProductionWithSharedFor(Symbol symbol, int minOccurs, int maxOccurs, String separator, ComponentType cmpType, Shared shared, boolean unique) {
+        NonterminalSymbol nonterminal = grammar.getSequenceNonterminalFor(symbol.toString(), minOccurs, maxOccurs, separator, false, null);
         if (nonterminal == null) {
-            nonterminal = createSequenceProductionFor(symbol, minOccurs, maxOccurs, separator, cmpType);
+            nonterminal = createSequenceProductionFor(symbol, minOccurs, maxOccurs, separator, cmpType, unique);
         }
 
         this.sharedPartName = Character.toUpperCase(shared.getValue().charAt(0)) + shared.getValue().substring(1);
 
-        NonterminalSymbol lhs = grammar.getSequenceNonterminalFor(nonterminal.toString(), minOccurs, maxOccurs, separator, null);
+        NonterminalSymbol lhs = grammar.getSequenceNonterminalFor(nonterminal.toString(), minOccurs, maxOccurs, separator, unique, null);
         if (lhs == null) {
             lhs = new NonterminalSymbol(symbol.getName() + "Array" + arrayID++ + DEFAUL_SYMBOL_WITH_SHARED_SUFFIX, new ListTypeWithShared(cmpType.getComponentType()));
         }
@@ -717,7 +719,7 @@ public class YajcoModelToBNFGrammarTranslator {
         production.addAlternative(alternative2);
 
         grammar.addProduction(production);
-        grammar.addSequence(nonterminal.toString(), 1, Range.INFINITY, shared.getSeparator(), shared.getValue(), lhs);
+        grammar.addSequence(nonterminal.toString(), 1, Range.INFINITY, shared.getSeparator(), unique, shared.getValue(), lhs);
 
         return new NonterminalSymbol(lhs.getName(), cmpType);
     }
