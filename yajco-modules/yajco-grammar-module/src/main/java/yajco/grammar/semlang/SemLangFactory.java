@@ -105,6 +105,10 @@ public final class SemLangFactory {
 		return createCollectionAndAddElementsAndReturnActions(varName, new OrderedSetType(varType), Collections.singletonList(new RValue(symbol)));
 	}
 
+	public static List<Action> createHashMapAndPutElementsAndReturnActions(Type varType, String varName, List<Symbol> symbol) {
+		return createCollectionAndAddElementsAndReturnActions(varName, new HashMapType(varType), simpleSymbolsToRValues(symbol));
+	}
+
 	public static List<Action> createListAndAddElementsActions(Type varType, String varName, List<Symbol> symbols) {
 		return createCollectionAndAddElementsActions(varName, new ListType(varType), simpleSymbolsToRValues(symbols));
 	}
